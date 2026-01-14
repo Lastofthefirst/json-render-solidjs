@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Renderer, useUIStream, JSONUIProvider } from "@json-render/react";
 import type { UITree } from "@json-render/core";
 import { toast } from "sonner";
@@ -69,6 +69,7 @@ export function Demo() {
   const [activeTab, setActiveTab] = useState<Tab>("json");
   const [simulationTree, setSimulationTree] = useState<UITree | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Use the library's useUIStream hook for real API calls
   const {
@@ -189,7 +190,19 @@ export function Demo() {
     <div className="w-full max-w-4xl mx-auto text-left">
       {/* Prompt input */}
       <div className="mb-6">
-        <div className="border border-border rounded p-3 bg-background font-mono text-sm min-h-[44px] flex items-center justify-between">
+        <div
+          className="border border-border rounded p-3 bg-background font-mono text-sm min-h-[44px] flex items-center justify-between cursor-text"
+          onClick={() => {
+            if (mode === "simulation") {
+              setMode("interactive");
+              setPhase("complete");
+              setUserPrompt("");
+              setTimeout(() => inputRef.current?.focus(), 0);
+            } else {
+              inputRef.current?.focus();
+            }
+          }}
+        >
           {mode === "simulation" ? (
             <div className="flex items-center flex-1">
               <span className="inline-flex items-center h-5">{typedPrompt}</span>
@@ -206,6 +219,7 @@ export function Demo() {
               }}
             >
               <input
+                ref={inputRef}
                 type="text"
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
@@ -219,7 +233,10 @@ export function Demo() {
           )}
           {(mode === "simulation" || isStreaming) ? (
             <button
-              onClick={stopGeneration}
+              onClick={(e) => {
+                e.stopPropagation();
+                stopGeneration();
+              }}
               className="ml-2 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
               aria-label="Stop"
             >
@@ -235,7 +252,10 @@ export function Demo() {
             </button>
           ) : (
             <button
-              onClick={handleSubmit}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSubmit();
+              }}
               disabled={!userPrompt.trim()}
               className="ml-2 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-30"
               aria-label="Submit"
