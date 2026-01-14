@@ -1,5 +1,4 @@
 import { streamText } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
 import { componentList } from '@/lib/catalog';
 
 export const maxDuration = 30;
@@ -70,7 +69,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: gateway('openai/gpt-4o'),
+    model: 'anthropic/claude-opus-4.5',
     system: SYSTEM_PROMPT,
     prompt: fullPrompt,
     temperature: 0.7,

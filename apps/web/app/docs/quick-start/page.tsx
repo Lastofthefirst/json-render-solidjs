@@ -87,7 +87,6 @@ export const registry = {
       </p>
       <Code lang="typescript">{`// app/api/generate/route.ts
 import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import { generateCatalogPrompt } from '@json-render/core';
 import { catalog } from '@/lib/catalog';
 
@@ -96,7 +95,7 @@ export async function POST(req: Request) {
   const systemPrompt = generateCatalogPrompt(catalog);
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: 'anthropic/claude-opus-4.5',
     system: systemPrompt,
     prompt,
   });

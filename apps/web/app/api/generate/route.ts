@@ -1,5 +1,4 @@
 import { streamText } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
 
 export const maxDuration = 30;
 
@@ -86,7 +85,7 @@ export async function POST(req: Request) {
   const sanitizedPrompt = String(prompt || '').slice(0, MAX_PROMPT_LENGTH);
 
   const result = streamText({
-    model: gateway('anthropic/claude-haiku-4.5'),
+    model: 'anthropic/claude-opus-4.5',
     system: SYSTEM_PROMPT,
     prompt: sanitizedPrompt,
     temperature: 0.7,

@@ -41,7 +41,7 @@ bun add @json-render/core @json-render/react`}</Code>
       <p className="text-sm text-muted-foreground mb-4">
         To use json-render with AI models, you&apos;ll also need the Vercel AI SDK:
       </p>
-      <Code lang="bash">npm install ai @ai-sdk/openai</Code>
+      <Code lang="bash">npm install ai</Code>
 
       <div className="flex gap-3 mt-12">
         <Button size="sm" asChild>

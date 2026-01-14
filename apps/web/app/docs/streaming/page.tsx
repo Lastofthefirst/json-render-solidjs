@@ -67,7 +67,7 @@ function App() {
   const { prompt } = await req.json();
   
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: 'anthropic/claude-opus-4.5',
     system: generateCatalogPrompt(catalog),
     prompt,
   });

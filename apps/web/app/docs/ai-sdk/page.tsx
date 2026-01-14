@@ -14,12 +14,11 @@ export default function AiSdkPage() {
       </p>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Installation</h2>
-      <Code lang="bash">npm install ai @ai-sdk/openai</Code>
+      <Code lang="bash">npm install ai</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">API Route Setup</h2>
       <Code lang="typescript">{`// app/api/generate/route.ts
 import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import { generateCatalogPrompt } from '@json-render/core';
 import { catalog } from '@/lib/catalog';
 
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
     : '';
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: 'anthropic/claude-opus-4.5',
     system: systemPrompt + contextPrompt,
     prompt,
   });
@@ -46,17 +45,6 @@ export async function POST(req: Request) {
     },
   });
 }`}</Code>
-
-      <h2 className="text-xl font-semibold mt-12 mb-4">Using Gateway</h2>
-      <p className="text-sm text-muted-foreground mb-4">
-        For multi-provider support, use the AI Gateway:
-      </p>
-      <Code lang="typescript">{`import { gateway } from '@ai-sdk/gateway';
-
-const result = streamText({
-  model: gateway('openai/gpt-4o'),
-  // ...
-});`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Client-Side Hook</h2>
       <p className="text-sm text-muted-foreground mb-4">
