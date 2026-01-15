@@ -1,11 +1,9 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-
-export async function GET() {
-  const geistSemiBold = await fetch(
-    new URL("../fonts/GeistVF.woff", import.meta.url),
-  ).then((res) => res.arrayBuffer());
+export async function GET(request: Request) {
+  const geist = await fetch(new URL("/Geist-Regular.ttf", request.url)).then(
+    (res) => res.arrayBuffer(),
+  );
 
   return new ImageResponse(
     <div
@@ -20,9 +18,9 @@ export async function GET() {
     >
       <span
         style={{
-          fontSize: 72,
+          fontSize: 144,
           fontFamily: "Geist",
-          fontWeight: 600,
+          fontWeight: 400,
           color: "white",
           letterSpacing: "-0.02em",
         }}
@@ -36,9 +34,9 @@ export async function GET() {
       fonts: [
         {
           name: "Geist",
-          data: geistSemiBold,
+          data: geist,
           style: "normal",
-          weight: 600,
+          weight: 400,
         },
       ],
     },
