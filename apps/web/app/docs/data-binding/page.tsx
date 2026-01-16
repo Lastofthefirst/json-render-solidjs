@@ -38,7 +38,7 @@ export default function DataBindingPage() {
       <p className="text-sm text-muted-foreground mb-4">
         Wrap your app with DataProvider to enable data binding:
       </p>
-      <Code lang="tsx">{`import { DataProvider } from '@json-render/react';
+      <Code lang="tsx">{`import { DataProvider } from '@json-render/solidjs';
 
 function App() {
   const initialData = {
@@ -56,13 +56,14 @@ function App() {
       <h2 className="text-xl font-semibold mt-12 mb-4">Reading Data</h2>
       <p className="text-sm text-muted-foreground mb-4">
         Use <code className="text-foreground">useDataValue</code> for read-only
-        access:
+        access. In SolidJS, the returned value is a signal accessor:
       </p>
-      <Code lang="tsx">{`import { useDataValue } from '@json-render/react';
+      <Code lang="tsx">{`import { useDataValue } from '@json-render/solidjs';
 
 function UserGreeting() {
   const name = useDataValue('/user/name');
-  return <h1>Hello, {name}!</h1>;
+  // Call name() to access the value
+  return <h1>Hello, {name()}!</h1>;
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Two-Way Binding</h2>
@@ -70,16 +71,16 @@ function UserGreeting() {
         Use <code className="text-foreground">useDataBinding</code> for
         read-write access:
       </p>
-      <Code lang="tsx">{`import { useDataBinding } from '@json-render/react';
+      <Code lang="tsx">{`import { useDataBinding } from '@json-render/solidjs';
 
 function EmailInput() {
   const [email, setEmail] = useDataBinding('/form/email');
-  
+
   return (
     <input
       type="email"
-      value={email || ''}
-      onChange={(e) => setEmail(e.target.value)}
+      value={email() ?? ''}
+      onInput={(e) => setEmail(e.currentTarget.value)}
     />
   );
 }`}</Code>
@@ -90,21 +91,18 @@ function EmailInput() {
       <p className="text-sm text-muted-foreground mb-4">
         Access the full data context for advanced use cases:
       </p>
-      <Code lang="tsx">{`import { useData } from '@json-render/react';
+      <Code lang="tsx">{`import { useData } from '@json-render/solidjs';
 
 function DataDebugger() {
-  const { data, setData, getValue, setValue } = useData();
-  
+  const { data, set, get } = useData();
+
   // Read any path
-  const revenue = getValue('/metrics/revenue');
-  
+  const revenue = () => get('/metrics/revenue');
+
   // Write any path
-  const updateRevenue = () => setValue('/metrics/revenue', 150000);
-  
-  // Replace all data
-  const resetData = () => setData({ user: {}, form: {} });
-  
-  return <pre>{JSON.stringify(data, null, 2)}</pre>;
+  const updateRevenue = () => set('/metrics/revenue', 150000);
+
+  return <pre>{JSON.stringify(data(), null, 2)}</pre>;
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">In JSON UI Trees</h2>

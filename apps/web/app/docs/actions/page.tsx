@@ -53,7 +53,7 @@ export default function ActionsPage() {
       <p className="text-sm text-muted-foreground mb-4">
         Provide action handlers to your app:
       </p>
-      <Code lang="tsx">{`import { ActionProvider } from '@json-render/react';
+      <Code lang="tsx">{`import { ActionProvider } from '@json-render/solidjs';
 
 function App() {
   const handlers = {
@@ -64,12 +64,12 @@ function App() {
       });
       return response.json();
     },
-    
+
     export_data: async (params) => {
       const blob = await generateExport(params.format, params.filters);
       downloadBlob(blob, \`export.\${params.format}\`);
     },
-    
+
     navigate: (params) => {
       window.location.href = params.url;
     },
@@ -85,20 +85,20 @@ function App() {
       <h2 className="text-xl font-semibold mt-12 mb-4">
         Using Actions in Components
       </h2>
-      <Code lang="tsx">{`const Button = ({ element, onAction }) => (
-  <button onClick={() => onAction(element.props.action, {})}>
-    {element.props.label}
+      <Code lang="tsx">{`const Button = (props) => (
+  <button onClick={() => props.onAction?.(props.element.props.action)}>
+    {props.element.props.label}
   </button>
 );
 
-// Or use the useAction hook
-import { useAction } from '@json-render/react';
+// Or use the useActions hook
+import { useActions } from '@json-render/solidjs';
 
 function SubmitButton() {
-  const submitForm = useAction('submit_form');
-  
+  const { execute } = useActions();
+
   return (
-    <button onClick={() => submitForm({ formId: 'contact' })}>
+    <button onClick={() => execute({ name: 'submit_form', params: { formId: 'contact' } })}>
       Submit
     </button>
   );
