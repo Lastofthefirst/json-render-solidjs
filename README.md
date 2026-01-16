@@ -5,7 +5,7 @@
 Let end users generate dashboards, widgets, apps, and data visualizations from prompts — safely constrained to components you define.
 
 ```bash
-npm install @json-render/core @json-render/react
+pnpm add @json-render/core @json-render/solidjs
 ```
 
 ## Why json-render?
@@ -54,20 +54,22 @@ const catalog = createCatalog({
 ### 2. Register Your Components (how they render)
 
 ```tsx
+import { useDataValue } from '@json-render/solidjs';
+
 const registry = {
-  Card: ({ element, children }) => (
-    <div className="card">
-      <h3>{element.props.title}</h3>
-      {children}
+  Card: (props) => (
+    <div class="card">
+      <h3>{props.element.props.title}</h3>
+      {props.children}
     </div>
   ),
-  Metric: ({ element }) => {
-    const value = useDataValue(element.props.valuePath);
-    return <div className="metric">{format(value)}</div>;
+  Metric: (props) => {
+    const value = useDataValue(props.element.props.valuePath);
+    return <div class="metric">{format(value())}</div>;
   },
-  Button: ({ element, onAction }) => (
-    <button onClick={() => onAction(element.props.action)}>
-      {element.props.label}
+  Button: (props) => (
+    <button onClick={() => props.onAction(props.element.props.action)}>
+      {props.element.props.label}
     </button>
   ),
 };
@@ -76,22 +78,22 @@ const registry = {
 ### 3. Let AI Generate
 
 ```tsx
-import { DataProvider, ActionProvider, Renderer, useUIStream } from '@json-render/react';
+import { DataProvider, ActionProvider, Renderer, createUIStream } from '@json-render/solidjs';
 
 function Dashboard() {
-  const { tree, send } = useUIStream({ api: '/api/generate' });
+  const { tree, send } = createUIStream({ api: '/api/generate' });
 
   return (
     <DataProvider initialData={{ revenue: 125000, growth: 0.15 }}>
-      <ActionProvider actions={{
+      <ActionProvider handlers={{
         export_report: () => downloadPDF(),
         refresh_data: () => refetch(),
       }}>
         <input
           placeholder="Create a revenue dashboard..."
-          onKeyDown={(e) => e.key === 'Enter' && send(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && send(e.currentTarget.value)}
         />
-        <Renderer tree={tree} components={registry} />
+        <Renderer tree={tree()} registry={registry} />
       </ActionProvider>
     </DataProvider>
   );
@@ -179,19 +181,40 @@ Actions with confirmation dialogs and callbacks:
 | Package | Description |
 |---------|-------------|
 | `@json-render/core` | Types, schemas, visibility, actions, validation |
-| `@json-render/react` | React renderer, providers, hooks |
+| `@json-render/solidjs` | SolidJS renderer, providers, hooks |
 
-## Demo
+## Try It In This Repo
 
 ```bash
+# Clone and install
 git clone https://github.com/vercel-labs/json-render
 cd json-render
 pnpm install
+
+# Run development servers
 pnpm dev
 ```
 
 - http://localhost:3000 — Docs & Playground
 - http://localhost:3001 — Example Dashboard
+
+### Run Tests
+
+```bash
+pnpm test
+```
+
+### Type Check
+
+```bash
+pnpm check-types
+```
+
+### Build All Packages
+
+```bash
+pnpm build
+```
 
 ## Project Structure
 
@@ -199,7 +222,7 @@ pnpm dev
 json-render/
 ├── packages/
 │   ├── core/        → @json-render/core
-│   └── react/       → @json-render/react
+│   └── solidjs/     → @json-render/solidjs
 ├── apps/
 │   └── web/         → Docs & Playground site
 └── examples/
@@ -215,7 +238,7 @@ json-render/
 └─────────────┘     └──────────────┘     └─────────────┘
                                                │
                     ┌──────────────┐            │
-                    │  Your React  │◀───────────┘
+                    │ Your SolidJS │◀───────────┘
                     │  Components  │ (streamed)
                     └──────────────┘
 ```

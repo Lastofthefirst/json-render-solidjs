@@ -58,29 +58,31 @@ export const catalog = createCatalog({
         2. Create your components
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Register React components that render each catalog type:
+        Register SolidJS components that render each catalog type:
       </p>
       <Code lang="tsx">{`// components/registry.tsx
+import { Show } from 'solid-js';
+
 export const registry = {
-  Card: ({ element, children }) => (
-    <div className="p-4 border rounded-lg">
-      <h2 className="font-bold">{element.props.title}</h2>
-      {element.props.description && (
-        <p className="text-gray-600">{element.props.description}</p>
-      )}
-      {children}
+  Card: (props) => (
+    <div class="p-4 border rounded-lg">
+      <h2 class="font-bold">{props.element.props.title}</h2>
+      <Show when={props.element.props.description}>
+        <p class="text-gray-600">{props.element.props.description}</p>
+      </Show>
+      {props.children}
     </div>
   ),
-  Button: ({ element, onAction }) => (
+  Button: (props) => (
     <button
-      className="px-4 py-2 bg-blue-500 text-white rounded"
-      onClick={() => onAction(element.props.action, {})}
+      class="px-4 py-2 bg-blue-500 text-white rounded"
+      onClick={() => props.onAction?.(props.element.props.action)}
     >
-      {element.props.label}
+      {props.element.props.label}
     </button>
   ),
-  Text: ({ element }) => (
-    <p>{element.props.content}</p>
+  Text: (props) => (
+    <p>{props.element.props.content}</p>
   ),
 };`}</Code>
 
@@ -90,10 +92,10 @@ export const registry = {
       <p className="text-sm text-muted-foreground mb-4">
         Set up a streaming API route for AI generation:
       </p>
-      <Code lang="typescript">{`// app/api/generate/route.ts
+      <Code lang="typescript">{`// api/generate.ts
 import { streamText } from 'ai';
 import { generateCatalogPrompt } from '@json-render/core';
-import { catalog } from '@/lib/catalog';
+import { catalog } from '../lib/catalog';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
@@ -114,21 +116,20 @@ export async function POST(req: Request) {
       <p className="text-sm text-muted-foreground mb-4">
         Use the providers and renderer to display AI-generated UI:
       </p>
-      <Code lang="tsx">{`// app/page.tsx
-'use client';
+      <Code lang="tsx">{`// App.tsx
+import { Show } from 'solid-js';
+import { DataProvider, ActionProvider, VisibilityProvider, Renderer, createUIStream } from '@json-render/solidjs';
+import { registry } from './components/registry';
 
-import { DataProvider, ActionProvider, VisibilityProvider, Renderer, useUIStream } from '@json-render/react';
-import { registry } from '@/components/registry';
-
-export default function Page() {
-  const { tree, isLoading, generate } = useUIStream({
-    endpoint: '/api/generate',
+export default function App() {
+  const { tree, isStreaming, send } = createUIStream({
+    api: '/api/generate',
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    generate(formData.get('prompt') as string);
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    send(formData.get('prompt') as string);
   };
 
   return (
@@ -142,15 +143,17 @@ export default function Page() {
             <input
               name="prompt"
               placeholder="Describe what you want..."
-              className="border p-2 rounded"
+              class="border p-2 rounded"
             />
-            <button type="submit" disabled={isLoading}>
+            <button type="submit" disabled={isStreaming()}>
               Generate
             </button>
           </form>
 
-          <div className="mt-8">
-            <Renderer tree={tree} registry={registry} />
+          <div class="mt-8">
+            <Show when={tree()}>
+              <Renderer tree={tree()!} registry={registry} />
+            </Show>
           </div>
         </ActionProvider>
       </VisibilityProvider>

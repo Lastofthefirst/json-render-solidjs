@@ -1,21 +1,20 @@
-# @json-render/react
+# @json-render/solidjs
 
-**Predictable. Guardrailed. Fast.** React renderer for user-prompted dashboards, widgets, apps, and data visualizations.
+**Predictable. Guardrailed. Fast.** SolidJS renderer for user-prompted dashboards, widgets, apps, and data visualizations.
 
 ## Features
 
+- **Fine-grained Reactivity**: Leverages SolidJS signals for efficient updates
 - **Visibility Filtering**: Components automatically show/hide based on visibility conditions
 - **Action Handling**: Built-in action execution with confirmation dialogs
 - **Validation**: Field validation with error display
-- **Data Binding**: Two-way data binding between UI and data model
+- **Data Binding**: Reactive data binding between UI and data model
 - **Streaming**: Progressive rendering from streamed UI trees
 
 ## Installation
 
 ```bash
-npm install @json-render/react @json-render/core
-# or
-pnpm add @json-render/react @json-render/core
+pnpm add @json-render/solidjs @json-render/core solid-js
 ```
 
 ## Quick Start
@@ -23,19 +22,19 @@ pnpm add @json-render/react @json-render/core
 ### Basic Setup
 
 ```tsx
-import { JSONUIProvider, Renderer, useUIStream } from '@json-render/react';
+import { JSONUIProvider, Renderer, createUIStream } from '@json-render/solidjs';
 
 // Define your component registry
 const registry = {
-  Card: ({ element, children }) => (
-    <div className="card">
-      <h3>{element.props.title}</h3>
-      {children}
+  Card: (props) => (
+    <div class="card">
+      <h3>{props.element.props.title}</h3>
+      {props.children}
     </div>
   ),
-  Button: ({ element, onAction }) => (
-    <button onClick={() => onAction?.(element.props.action)}>
-      {element.props.label}
+  Button: (props) => (
+    <button onClick={() => props.onAction?.(props.element.props.action)}>
+      {props.element.props.label}
     </button>
   ),
 };
@@ -51,7 +50,7 @@ const actionHandlers = {
 };
 
 function App() {
-  const { tree, isStreaming, send, clear } = useUIStream({
+  const { tree, isStreaming, send, clear } = createUIStream({
     api: '/api/generate',
   });
 
@@ -64,9 +63,9 @@ function App() {
     >
       <input
         placeholder="Describe the UI..."
-        onKeyDown={(e) => e.key === 'Enter' && send(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && send(e.currentTarget.value)}
       />
-      <Renderer tree={tree} registry={registry} loading={isStreaming} />
+      <Renderer tree={tree()} registry={registry} loading={isStreaming()} />
     </JSONUIProvider>
   );
 }
@@ -81,62 +80,61 @@ import {
   ActionProvider,
   ValidationProvider,
   useData,
-  useVisibility,
+  useIsVisible,
   useActions,
   useFieldValidation,
-} from '@json-render/react';
+} from '@json-render/solidjs';
 
 // Data context
 function MyComponent() {
   const { data, get, set } = useData();
-  const value = get('/user/name');
-  
+  const value = () => get('/user/name');
+
   return (
     <input
-      value={value}
-      onChange={(e) => set('/user/name', e.target.value)}
+      value={value() ?? ''}
+      onInput={(e) => set('/user/name', e.currentTarget.value)}
     />
   );
 }
 
 // Visibility context
-function ConditionalComponent({ visible }) {
-  const { isVisible } = useVisibility();
-  
-  if (!isVisible(visible)) {
-    return null;
-  }
-  
-  return <div>Visible content</div>;
+function ConditionalComponent(props) {
+  const isVisible = useIsVisible(() => props.visible);
+
+  return (
+    <Show when={isVisible()}>
+      <div>Visible content</div>
+    </Show>
+  );
 }
 
 // Action context
-function ActionButton({ action }) {
-  const { execute, loadingActions } = useActions();
-  
+function ActionButton(props) {
+  const { execute } = useActions();
+
   return (
-    <button
-      onClick={() => execute(action)}
-      disabled={loadingActions.has(action.name)}
-    >
-      {action.name}
+    <button onClick={() => execute(props.action)}>
+      {props.action.name}
     </button>
   );
 }
 
 // Validation context
-function ValidatedInput({ path, checks }) {
-  const { errors, validate, touch } = useFieldValidation(path, { checks });
-  const [value, setValue] = useDataBinding(path);
-  
+function ValidatedInput(props) {
+  const { errors, validate, touch } = useFieldValidation(props.path, { checks: props.checks });
+  const { get, set } = useData();
+
   return (
     <div>
       <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        value={get(props.path) ?? ''}
+        onInput={(e) => set(props.path, e.currentTarget.value)}
         onBlur={() => { touch(); validate(); }}
       />
-      {errors.map((err) => <span key={err}>{err}</span>)}
+      <For each={errors()}>
+        {(err) => <span>{err}</span>}
+      </For>
     </div>
   );
 }
@@ -145,16 +143,17 @@ function ValidatedInput({ path, checks }) {
 ### Streaming UI
 
 ```tsx
-import { useUIStream } from '@json-render/react';
+import { createUIStream, Renderer } from '@json-render/solidjs';
+import { Show } from 'solid-js';
 
 function StreamingDemo() {
   const {
-    tree,        // Current UI tree
-    isStreaming, // Whether currently streaming
-    error,       // Error if any
+    tree,        // Accessor for current UI tree
+    isStreaming, // Accessor for streaming state
+    error,       // Accessor for error
     send,        // Send a prompt
     clear,       // Clear the tree
-  } = useUIStream({
+  } = createUIStream({
     api: '/api/generate',
     onComplete: (tree) => console.log('Done:', tree),
     onError: (err) => console.error('Error:', err),
@@ -165,8 +164,12 @@ function StreamingDemo() {
       <button onClick={() => send('Create a dashboard')}>
         Generate
       </button>
-      {isStreaming && <span>Generating...</span>}
-      {tree && <Renderer tree={tree} registry={registry} />}
+      <Show when={isStreaming()}>
+        <span>Generating...</span>
+      </Show>
+      <Show when={tree()}>
+        <Renderer tree={tree()!} registry={registry} />
+      </Show>
     </div>
   );
 }
@@ -185,23 +188,19 @@ function StreamingDemo() {
 ### Hooks
 
 - `useData()` - Access data model
-- `useDataValue(path)` - Get a single value
-- `useDataBinding(path)` - Two-way binding like useState
-- `useVisibility()` - Access visibility evaluation
+- `useDataValue(path)` - Get a single reactive value
+- `useDataBinding(path)` - Two-way binding returning [getter, setter]
 - `useIsVisible(condition)` - Check if condition is visible
 - `useActions()` - Access action execution
-- `useAction(action)` - Execute a specific action
-- `useValidation()` - Access validation context
 - `useFieldValidation(path, config)` - Field-level validation
 
 ### Components
 
 - `Renderer` - Render a UI tree
-- `ConfirmDialog` - Default confirmation dialog
 
 ### Utilities
 
-- `useUIStream(options)` - Hook for streaming UI generation
+- `createUIStream(options)` - Create reactive stream for UI generation
 - `flatToTree(elements)` - Convert flat list to tree
 
 ## Component Props
@@ -209,30 +208,74 @@ function StreamingDemo() {
 Components in your registry receive these props:
 
 ```typescript
-interface ComponentRenderProps<P = Record<string, unknown>> {
-  element: UIElement<string, P>;  // The element definition
-  children?: ReactNode;           // Rendered children
+interface BaseComponentProps {
+  element: UIElement;           // The element definition
+  children?: JSX.Element;       // Rendered children
   onAction?: (action: Action) => void;  // Action callback
-  loading?: boolean;              // Streaming in progress
+  loading?: boolean;            // Streaming in progress
 }
 ```
 
 ## Example Component
 
 ```tsx
-function MetricComponent({ element }: ComponentRenderProps) {
-  const { label, valuePath, format } = element.props;
+import { useDataValue } from '@json-render/solidjs';
+
+function MetricComponent(props) {
+  const { label, valuePath, format } = props.element.props;
   const value = useDataValue(valuePath);
-  
-  const formatted = format === 'currency'
-    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
-    : String(value);
-  
+
+  const formatted = () => {
+    const v = value();
+    return format === 'currency'
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v)
+      : String(v);
+  };
+
   return (
-    <div className="metric">
-      <span className="label">{label}</span>
-      <span className="value">{formatted}</span>
+    <div class="metric">
+      <span class="label">{label}</span>
+      <span class="value">{formatted()}</span>
     </div>
   );
 }
+```
+
+## SolidJS-Specific Notes
+
+### Signals and Accessors
+
+In SolidJS, reactive values are accessed via function calls (accessors). When using hooks like `createUIStream`, the returned values are signals:
+
+```tsx
+const { tree, isStreaming } = createUIStream({ api: '/api/generate' });
+
+// Access values by calling them
+<Show when={tree()}>
+  <Renderer tree={tree()!} registry={registry} loading={isStreaming()} />
+</Show>
+```
+
+### Control Flow Components
+
+Use SolidJS control flow components (`Show`, `For`, `Switch/Match`) instead of JavaScript conditionals in JSX:
+
+```tsx
+import { Show, For } from 'solid-js';
+
+// Good
+<Show when={isVisible()}>
+  <Content />
+</Show>
+
+// Avoid
+{isVisible() && <Content />}
+```
+
+### Event Handlers
+
+Use `e.currentTarget` instead of `e.target` for typed access to the element:
+
+```tsx
+<input onInput={(e) => setValue(e.currentTarget.value)} />
 ```

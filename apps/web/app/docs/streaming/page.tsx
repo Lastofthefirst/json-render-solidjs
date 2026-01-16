@@ -21,22 +21,26 @@ export default function StreamingPage() {
 {"op":"add","path":"/root/children","value":{"key":"metric-1","type":"Metric","props":{"label":"Revenue"}}}
 {"op":"add","path":"/root/children","value":{"key":"metric-2","type":"Metric","props":{"label":"Users"}}}`}</Code>
 
-      <h2 className="text-xl font-semibold mt-12 mb-4">useUIStream Hook</h2>
+      <h2 className="text-xl font-semibold mt-12 mb-4">createUIStream</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        The hook handles parsing and state management:
+        The function creates reactive signals for streaming state management:
       </p>
-      <Code lang="tsx">{`import { useUIStream } from '@json-render/react';
+      <Code lang="tsx">{`import { createUIStream } from '@json-render/solidjs';
 
 function App() {
   const {
-    tree,        // Current UI tree state
-    isLoading,   // True while streaming
-    error,       // Any error that occurred
-    generate,    // Function to start generation
-    abort,       // Function to cancel streaming
-  } = useUIStream({
-    endpoint: '/api/generate',
+    tree,        // Signal accessor for current UI tree
+    isStreaming, // Signal accessor for streaming state
+    error,       // Signal accessor for any error
+    send,        // Function to start generation
+    clear,       // Function to clear the tree
+  } = createUIStream({
+    api: '/api/generate',
   });
+
+  // Access values by calling them as functions
+  console.log(tree());      // UITree | null
+  console.log(isStreaming()); // boolean
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Patch Operations</h2>
@@ -77,7 +81,7 @@ function App() {
       </p>
       <Code lang="typescript">{`export async function POST(req: Request) {
   const { prompt } = await req.json();
-  
+
   const result = streamText({
     model: 'anthropic/claude-opus-4.5',
     system: generateCatalogPrompt(catalog),
@@ -98,33 +102,44 @@ function App() {
         Progressive Rendering
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        The Renderer automatically updates as the tree changes:
+        The Renderer automatically updates as the tree changes. Use SolidJS
+        control flow components:
       </p>
-      <Code lang="tsx">{`function App() {
-  const { tree, isLoading } = useUIStream({ endpoint: '/api/generate' });
+      <Code lang="tsx">{`import { Show } from 'solid-js';
+import { createUIStream, Renderer } from '@json-render/solidjs';
+
+function App() {
+  const { tree, isStreaming } = createUIStream({ api: '/api/generate' });
 
   return (
     <div>
-      {isLoading && <LoadingIndicator />}
-      <Renderer tree={tree} registry={registry} />
+      <Show when={isStreaming()}>
+        <LoadingIndicator />
+      </Show>
+      <Show when={tree()}>
+        <Renderer tree={tree()!} registry={registry} />
+      </Show>
     </div>
   );
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Aborting Streams</h2>
-      <Code lang="tsx">{`function App() {
-  const { isLoading, generate, abort } = useUIStream({
-    endpoint: '/api/generate',
+      <Code lang="tsx">{`import { Show } from 'solid-js';
+import { createUIStream } from '@json-render/solidjs';
+
+function App() {
+  const { isStreaming, send, clear } = createUIStream({
+    api: '/api/generate',
   });
 
   return (
     <div>
-      <button onClick={() => generate('Create dashboard')}>
+      <button onClick={() => send('Create dashboard')}>
         Generate
       </button>
-      {isLoading && (
-        <button onClick={abort}>Cancel</button>
-      )}
+      <Show when={isStreaming()}>
+        <button onClick={clear}>Cancel</button>
+      </Show>
     </div>
   );
 }`}</Code>

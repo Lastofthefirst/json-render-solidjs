@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Code } from "@/components/code";
+import { PackageInstall } from "@/components/package-install";
 
 export const metadata = {
   title: "AI SDK Integration | json-render",
@@ -14,21 +15,21 @@ export default function AiSdkPage() {
       </p>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Installation</h2>
-      <Code lang="bash">npm install ai</Code>
+      <PackageInstall packages="ai" />
 
       <h2 className="text-xl font-semibold mt-12 mb-4">API Route Setup</h2>
-      <Code lang="typescript">{`// app/api/generate/route.ts
+      <Code lang="typescript">{`// api/generate.ts
 import { streamText } from 'ai';
 import { generateCatalogPrompt } from '@json-render/core';
-import { catalog } from '@/lib/catalog';
+import { catalog } from '../lib/catalog';
 
 export async function POST(req: Request) {
   const { prompt, currentTree } = await req.json();
-  
+
   const systemPrompt = generateCatalogPrompt(catalog);
-  
+
   // Optionally include current UI state for context
-  const contextPrompt = currentTree 
+  const contextPrompt = currentTree
     ? \`\\n\\nCurrent UI state:\\n\${JSON.stringify(currentTree, null, 2)}\`
     : '';
 
@@ -39,38 +40,42 @@ export async function POST(req: Request) {
   });
 
   return new Response(result.textStream, {
-    headers: { 
+    headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Transfer-Encoding': 'chunked',
     },
   });
 }`}</Code>
 
-      <h2 className="text-xl font-semibold mt-12 mb-4">Client-Side Hook</h2>
+      <h2 className="text-xl font-semibold mt-12 mb-4">Client-Side Usage</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Use <code className="text-foreground">useUIStream</code> on the client:
+        Use <code className="text-foreground">createUIStream</code> on the
+        client:
       </p>
-      <Code lang="tsx">{`'use client';
-
-import { useUIStream } from '@json-render/react';
+      <Code lang="tsx">{`import { Show } from 'solid-js';
+import { createUIStream, Renderer } from '@json-render/solidjs';
 
 function GenerativeUI() {
-  const { tree, isLoading, error, generate } = useUIStream({
-    endpoint: '/api/generate',
+  const { tree, isStreaming, error, send } = createUIStream({
+    api: '/api/generate',
   });
 
   return (
     <div>
-      <button 
-        onClick={() => generate('Create a dashboard with metrics')}
-        disabled={isLoading}
+      <button
+        onClick={() => send('Create a dashboard with metrics')}
+        disabled={isStreaming()}
       >
-        {isLoading ? 'Generating...' : 'Generate'}
+        {isStreaming() ? 'Generating...' : 'Generate'}
       </button>
-      
-      {error && <p className="text-red-500">{error.message}</p>}
-      
-      <Renderer tree={tree} registry={registry} />
+
+      <Show when={error()}>
+        <p class="text-red-500">{error()!.message}</p>
+      </Show>
+
+      <Show when={tree()}>
+        <Renderer tree={tree()!} registry={registry} />
+      </Show>
     </div>
   );
 }`}</Code>

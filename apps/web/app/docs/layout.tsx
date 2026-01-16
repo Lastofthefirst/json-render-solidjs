@@ -32,7 +32,7 @@ const navigation = [
     title: "API Reference",
     items: [
       { title: "@json-render/core", href: "/docs/api/core" },
-      { title: "@json-render/react", href: "/docs/api/react" },
+      { title: "@json-render/solidjs", href: "/docs/api/solidjs" },
     ],
   },
 ];

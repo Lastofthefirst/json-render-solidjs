@@ -71,8 +71,8 @@ export default function ValidationPage() {
     "valuePath": "/form/password",
     "checks": [
       { "fn": "required", "message": "Password is required" },
-      { 
-        "fn": "minLength", 
+      {
+        "fn": "minLength",
         "args": { "length": 8 },
         "message": "Password must be at least 8 characters"
       },
@@ -106,7 +106,7 @@ export default function ValidationPage() {
       <p className="text-sm text-muted-foreground mb-4">
         Then implement them in your ValidationProvider:
       </p>
-      <Code lang="tsx">{`import { ValidationProvider } from '@json-render/react';
+      <Code lang="tsx">{`import { ValidationProvider } from '@json-render/solidjs';
 
 function App() {
   const customValidators = {
@@ -129,25 +129,27 @@ function App() {
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Using in Components</h2>
-      <Code lang="tsx">{`import { useFieldValidation } from '@json-render/react';
+      <Code lang="tsx">{`import { For } from 'solid-js';
+import { useFieldValidation, useDataBinding } from '@json-render/solidjs';
 
-function TextField({ element }) {
-  const { value, setValue, errors, validate } = useFieldValidation(
-    element.props.valuePath,
-    element.props.checks
+function TextField(props) {
+  const [value, setValue] = useDataBinding(props.element.props.valuePath);
+  const { errors, validate, touch } = useFieldValidation(
+    props.element.props.valuePath,
+    { checks: props.element.props.checks }
   );
 
   return (
     <div>
-      <label>{element.props.label}</label>
+      <label>{props.element.props.label}</label>
       <input
-        value={value || ''}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={() => validate()}
+        value={value() ?? ''}
+        onInput={(e) => setValue(e.currentTarget.value)}
+        onBlur={() => { touch(); validate(); }}
       />
-      {errors.map((error, i) => (
-        <p key={i} className="text-red-500 text-sm">{error}</p>
-      ))}
+      <For each={errors()}>
+        {(error) => <p class="text-red-500 text-sm">{error}</p>}
+      </For>
     </div>
   );
 }`}</Code>

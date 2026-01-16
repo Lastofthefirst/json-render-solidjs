@@ -17,7 +17,7 @@ export default function VisibilityPage() {
       <p className="text-sm text-muted-foreground mb-4">
         Wrap your app with VisibilityProvider to enable conditional rendering:
       </p>
-      <Code lang="tsx">{`import { VisibilityProvider } from '@json-render/react';
+      <Code lang="tsx">{`import { VisibilityProvider } from '@json-render/solidjs';
 
 function App() {
   return (
@@ -122,13 +122,17 @@ function App() {
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Using in Components</h2>
-      <Code lang="tsx">{`import { useIsVisible } from '@json-render/react';
+      <Code lang="tsx">{`import { Show } from 'solid-js';
+import { useIsVisible } from '@json-render/solidjs';
 
-function ConditionalContent({ element, children }) {
-  const isVisible = useIsVisible(element.visible);
-  
-  if (!isVisible) return null;
-  return <div>{children}</div>;
+function ConditionalContent(props) {
+  const isVisible = useIsVisible(() => props.element.visible);
+
+  return (
+    <Show when={isVisible()}>
+      <div>{props.children}</div>
+    </Show>
+  );
 }`}</Code>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Next</h2>

@@ -9,11 +9,11 @@ export default function InstallationPage() {
     <article>
       <h1 className="text-3xl font-bold mb-4">Installation</h1>
       <p className="text-muted-foreground mb-8">
-        Install the core and React packages to get started.
+        Install the core and SolidJS packages to get started.
       </p>
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Install packages</h2>
-      <PackageInstall packages="@json-render/core @json-render/react" />
+      <PackageInstall packages="@json-render/core @json-render/solidjs" />
 
       <h2 className="text-xl font-semibold mt-12 mb-4">Peer Dependencies</h2>
       <p className="text-sm text-muted-foreground mb-4">
@@ -21,13 +21,13 @@ export default function InstallationPage() {
       </p>
       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 mb-4">
         <li>
-          <code className="text-foreground">react</code> ^19.0.0
+          <code className="text-foreground">solid-js</code> ^1.8.0
         </li>
         <li>
           <code className="text-foreground">zod</code> ^4.0.0
         </li>
       </ul>
-      <PackageInstall packages="react zod" />
+      <PackageInstall packages="solid-js zod" />
 
       <h2 className="text-xl font-semibold mt-12 mb-4">For AI Integration</h2>
       <p className="text-sm text-muted-foreground mb-4">
